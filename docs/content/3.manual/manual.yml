@@ -306,9 +306,9 @@ sections:
 
           A filter of the form `.foo.bar` is equivalent to `.foo|.bar`.
 
-          This syntax only works for simple, identifier-like keys, that
-          is, keys that are all made of alphanumeric characters and
-          underscore, and which do not start with a digit.
+          This syntax only works for simple, identifier-like keys; that
+          is, keys that consist of alphanumeric characters and
+          underscores, while not starting with a digit.
 
           If the key contains special characters, you need to surround
           it with double quotes like this: `."foo$"`, or else `.["foo$"]`.
@@ -330,8 +330,8 @@ sections:
       - title: "Optional Object Identifier-Index: `.foo?`"
         body: |
 
-          Just like `.foo`, but does not output even an error when `.`
-          is not an array or an object.
+          Just like `.foo`, but does not output even an error when the
+          input value is not an array or an object.
 
         examples:
           - program: '.foo?'
@@ -362,7 +362,7 @@ sections:
           element.
 
           Negative indices are allowed, with -1 referring to the last
-          element, -2 referring to the next to last element, and so on.
+          element, -2 referring to the next-to-last element, and so on.
 
         examples:
           - program: '.[0]'
@@ -414,8 +414,8 @@ sections:
           numbers as three separate results, rather than as a single
           array.
 
-          You can also use this on an object, and it will return all
-          the values of the object.
+          If used on an object, instead, it will return all the values of
+          the object.
 
         examples:
           - program: '.[]'
@@ -442,12 +442,12 @@ sections:
         body: |
 
           If two filters are separated by a comma, then the
-          same input will be fed into both and the two filters' output
+          same input will be fed into both, and the two filters' output
           value streams will be concatenated in order: first, all of the
           outputs produced by the left expression, and then all of the
-          outputs produced by the right. For instance, filter `.foo,
+          outputs produced by the right. (For instance, filter `.foo,
           .bar`, produces both the "foo" fields and "bar" fields as
-          separate outputs.
+          separate outputs.)
 
         examples:
           - program: '.foo, .bar'
@@ -465,7 +465,7 @@ sections:
       - title: "Pipe: `|`"
         body: |
 
-          The | operator combines two filters by feeding the output(s) of
+          The | operator combines two filters by feeding the output of
           the one on the left into the input of the one on the right. It's
           pretty much the same as the Unix shell's pipe, if you're used to
           that.
@@ -487,7 +487,7 @@ sections:
             input: '[{"name":"JSON", "good":true}, {"name":"XML", "good":false}]'
             output: ['"JSON"', '"XML"']
 
-      - title: "Parenthesis"
+      - title: "Parentheses"
         body: |
 
           Parenthesis work as a grouping operator just as in any typical
@@ -502,32 +502,36 @@ sections:
     body: |
 
       jq supports the same set of datatypes as JSON - numbers,
-      strings, booleans, arrays, objects (which in JSON-speak are
-      hashes with only string keys), and "null".
+      strings, booleans, arrays, objects (in the JSON sense - hashes with
+      only string keys), and "null".
 
       Booleans, null, strings and numbers are written the same way as
-      in javascript. Just like everything else in jq, these simple
+      in JavaScript. Just like everything else in jq, these simple
       values take an input and produce an output - `42` is a valid jq
       expression that takes an input, ignores it, and returns 42
       instead.
 
     entries:
-      - title: "Array construction: `[]`"
+      - title: "Array construction / collect expression-results: `[]`"
         body: |
 
-          As in JSON, `[]` is used to construct arrays, as in
-          `[1,2,3]`. The elements of the arrays can be any jq
-          expression, including a pipeline. All of the results produced
-          by all of the expressions are collected into one big array.
-          You can use it to construct an array out of a known quantity
-          of values (as in `[.foo, .bar, .baz]`) or to "collect" all the
-          results of a filter into an array (as in `[.items[].name]`)
+          `[]` is used to construct an array, as in `[1, 2, 3]`.  The
+          individual elements of the array can be constructed by any jq
+          expression, up to and including an entire pipeline.
+          (Parentheses may be required.) Any results produced by an
+          expression included between `[` and `]` are collected into one
+          array - this includes multiple results produced by a single such
+          expression.  You can use it to construct an array out of a known
+          quantity of values (as in `[.foo, .bar, .baz]`) or to 'collect'
+          all the results of a filter into an array (as in
+          `[.items[].name]`)
 
-          Once you understand the "," operator, you can look at jq's array
-          syntax in a different light: the expression `[1,2,3]` is not using a
-          built-in syntax for comma-separated arrays, but is instead applying
-          the `[]` operator (collect results) to the expression 1,2,3 (which
-          produces three different results).
+          Once you understand the `,` (comma) operator, you can look at
+          jq's array syntax in a different light: the expression
+          `[1, 2, 3]` is not using a built-in syntax for comma-separated
+          arrays, but is instead applying the `[...]` operator (collect
+          results) to the compound expression `1, 2, 3` (which is three
+          'literal' filters producing three different results).
 
           If you have a filter `X` that produces four results,
           then the expression `[X]` will produce a single result, an
@@ -544,81 +548,78 @@ sections:
       - title: "Object Construction: `{}`"
         body: |
 
-          Like JSON, `{}` is for constructing objects (aka
-          dictionaries or hashes), as in: `{"a": 42, "b": 17}`.
+          `{}` is for constructing objects (a.k.a. dictionaries or
+          hash-maps), as in: `{"a": 42, "b": 17}`.
 
-          If the keys are "identifier-like", then the quotes can be left
-          off, as in `{a:42, b:17}`.  Keys generated by expressions need
-          to be parenthesized, e.g., `{("a"+"b"):59}`.
+          If the keys are 'identifier-like' (consisting of alphanumeric
+          characters and underscores, while not starting with a digit),
+          then the quotes can be omitted, as in `{a:42, b:17}`.
 
           The value can be any expression (although you may need to
           wrap it in parentheses if it's a complicated one), which gets
           applied to the {} expression's input (remember, all filters
-          have an input and an output).
+          have an input and an output):
 
               {foo: .bar}
 
           will produce the JSON object `{"foo": 42}` if given the JSON
-          object `{"bar":42, "baz":43}` as its input. You can use this
-          to select particular fields of an object: if the input is an
-          object with "user", "title", "id", and "content" fields and
-          you just want "user" and "title", you can write
+          object `{"bar": 42, "baz": 43}` as its input.
+
+          One particularly common operation is selecting particular fields
+          of an object: if the input is an object with `"user"`,
+          `"title"`, `"id"`, and `"content"` fields, you may extract the
+          `"user"` and `"title"` fields by writing:
 
               {user: .user, title: .title}
 
-          Because that is so common, there's a shortcut syntax for it:
-          `{user, title}`.
+          Because this is so common, a convenience syntax is provided:
 
-          If one of the expressions produces multiple results,
-          multiple dictionaries will be produced. If the input's
+              {user, title}
 
-              {"user":"stedolan","titles":["JQ Primer", "More JQ"]}
+          Keys may be generated by expressions, as well, if wrapped in
+          parentheses. For example, given the input:
 
-          then the expression
+              {"user":"stedolan","titles":["jq Primer","More jq"]}
 
-              {user, title: .titles[]}
-
-          will produce two outputs:
-
-              {"user":"stedolan", "title": "JQ Primer"}
-              {"user":"stedolan", "title": "More JQ"}
-
-          Putting parentheses around the key means it will be evaluated as an
-          expression. With the same input as above,
+          ... the expression
 
               {(.user): .titles}
 
-          produces
+          ... produces:
 
-              {"stedolan": ["JQ Primer", "More JQ"]}
+              {"stedolan": ["jq Primer", "More jq"]}
+
+          If any one of the expressions produces multiple results,
+          multiple dictionaries will be produced. With the same input as above,
+
+              {user, title: .titles[]}
+
+          ... will produce two outputs:
+
+              {"user":"stedolan", "title": "jq Primer"}
+              {"user":"stedolan", "title": "More jq"}
+
+          Several expressions with multiple results for each will result
+          in combinatorial enumeration - that is,
+
+              {(.titles[]): .titles[]}
+
+          ... will produce *four* outputs:
+
+              {"jq Primer": "jq Primer"}
+              {"jq Primer": "More jq"}
+              {"More jq": "jq Primer"}
+              {"More jq": "More jq"}
 
         examples:
           - program: '{user, title: .titles[]}'
-            input: '{"user":"stedolan","titles":["JQ Primer", "More JQ"]}'
+            input: '{"user":"stedolan","titles":["jq Primer", "More jq"]}'
             output:
-              - '{"user":"stedolan", "title": "JQ Primer"}'
-              - '{"user":"stedolan", "title": "More JQ"}'
+              - '{"user":"stedolan", "title": "jq Primer"}'
+              - '{"user":"stedolan", "title": "More jq"}'
           - program: '{(.user): .titles}'
-            input: '{"user":"stedolan","titles":["JQ Primer", "More JQ"]}'
-            output: ['{"stedolan": ["JQ Primer", "More JQ"]}']
-
-      - title: "Recursive Descent: `..`"
-        body: |
-
-          Recursively descends `.`, producing every value.  This is the
-          same as the zero-argument `recurse` builtin (see below).  This
-          is intended to resemble the XPath `//` operator.  Note that
-          `..a` does not work; use `..|.a` instead.  In the example
-          below we use `..|.a?` to find all the values of object keys
-          "a" in any object found "below" `.`.
-
-          This is particularly useful in conjunction with `path(EXP)`
-          (also see below) and the `?` operator.
-
-        examples:
-          - program: '..|.a?'
-            input: '[[{"a":1}]]'
-            output: ['1']
+            input: '{"user":"stedolan","titles":["jq Primer", "More jq"]}'
+            output: ['{"stedolan": ["jq Primer", "More jq"]}']
 
   - title: Builtin operators and functions
     body: |
@@ -715,22 +716,39 @@ sections:
             input: '[1,0,-1]'
             output: ['1', '-1']
 
+      - title: "Recursive Descent: `..`"
+        body: |
+
+          Recursively descends the input object, producing every
+          encountered value.  This is the same as the zero-argument
+          `recurse` builtin (see below).  This is intended to resemble the
+          XPath `//` operator.  Note that `..a` does not work; use `..|.a`
+          instead.  In the example below we use `..|.a?` to find all the
+          values of object keys "a" in any object found "below" the input
+          object.
+
+          This is particularly useful in conjunction with `path(EXPR)`
+          (also see below) and the `?` operator.
+
+        examples:
+          - program: '..|.a?'
+            input: '[[{"a":1}]]'
+            output: ['1']
 
       - title: "`length`"
         body: |
 
-          The builtin function `length` gets the length of various
-          different types of value:
+          `length` gets the length of various different types of value:
 
-          - The length of a **string** is the number of Unicode
+          - The `length` of a **string** is the number of Unicode
             codepoints it contains (which will be the same as its
             JSON-encoded length in bytes if it's pure ASCII).
 
-          - The length of an **array** is the number of elements.
+          - The `length` of an **array** is the number of elements.
 
-          - The length of an **object** is the number of key-value pairs.
+          - The `length` of an **object** is the number of key-value pairs.
 
-          - The length of **null** is zero.
+          - The `length` of **null** is zero.
 
         examples:
           - program: '.[] | length'
@@ -741,8 +759,8 @@ sections:
       - title: "`utf8bytelength`"
         body: |
 
-          The builtin function `utf8bytelength` outputs the number of
-          bytes used to encode a string in UTF-8.
+          `utf8bytelength` outputs the number of bytes used to encode a
+          string in UTF-8.
 
         examples:
           - program: 'utf8bytelength'
@@ -752,17 +770,16 @@ sections:
       - title: "`keys`, `keys_unsorted`"
         body: |
 
-          The builtin function `keys`, when given an object, returns
-          its keys in an array.
+          `keys`, when given an object, returns its keys in an array.
 
-          The keys are sorted "alphabetically", by unicode codepoint
+          The keys are sorted "alphabetically", by Unicode codepoint
           order. This is not an order that makes particular sense in
-          any particular language, but you can count on it being the
-          same for any two objects with the same set of keys,
+          any particular language, but is instead intended to ensure the
+          same result for any two objects with the same set of keys,
           regardless of locale settings.
 
           When `keys` is given an array, it returns the valid indices
-          for that array: the integers from 0 to length-1.
+          for that array: the integers from `0` to `length - 1`.
 
           The `keys_unsorted` function is just like `keys`, but if
           the input is an object then the keys will not be sorted,
@@ -779,11 +796,11 @@ sections:
       - title: "`has(key)`"
         body: |
 
-          The builtin function `has` returns whether the input object
-          has the given key, or the input array has an element at the
-          given index.
+          `has` returns a boolean indicating whether the input object has
+          a value for the given key, or the input array has an element at
+          the given index.
 
-          `has($key)` has the same effect as checking whether `$key`
+          `has("a_key")` has the same effect as checking whether `"a_key"`
           is a member of the array returned by `keys`, although `has`
           will be faster.
 
@@ -798,10 +815,10 @@ sections:
       - title: "`in`"
         body: |
 
-          The builtin function `in` returns whether or not the input key is in the
-          given object, or the input index corresponds to an element
-          in the given array. It is, essentially, an inversed version
-          of `has`.
+          `in` returns whether or not the input key has a value in the
+          given object, or the input index corresponds to an element in
+          the given array. It is, essentially, an inversed version of
+          `has`.
 
         examples:
           - program: '.[] | in({"foo": 42})'
@@ -814,31 +831,33 @@ sections:
       - title: "`map(x)`, `map_values(x)`"
         body: |
 
-          For any filter `x`, `map(x)` will run that filter for each
+          `map(x)`, for any filter `x`, will run that filter for each
           element of the input array, and return the outputs in a new
-          array. `map(.+1)` will increment each element of an array of numbers.
+          array. For instance, `map(. + 1)` will increment each element of
+          an array of numbers.
 
-          Similarly, `map_values(x)` will run that filter for each element,
-          but it will return an object when an object is passed.
+          Similarly, `map_values(x)` will run the filter `x` for each
+          value, assigning the resulting value to the corresponding key in
+          the final object.
 
           `map(x)` is equivalent to `[.[] | x]`. In fact, this is how
           it's defined. Similarly, `map_values(x)` is defined as `.[] |= x`.
 
         examples:
-          - program: 'map(.+1)'
+          - program: 'map(. + 1)'
             input: '[1,2,3]'
             output: ['[2,3,4]']
 
-          - program: 'map_values(.+1)'
+          - program: 'map_values(. + 1)'
             input: '{"a": 1, "b": 2, "c": 3}'
             output: ['{"a": 2, "b": 3, "c": 4}']
 
       - title: "`path(path_expression)`"
         body: |
 
-          Outputs array representations of the given path expression
-          in `.`.  The outputs are arrays of strings (object keys)
-          and/or numbers (array indices).
+          `path` outputs array representations of the given path
+          expression in the input object.  The outputs are arrays of
+          strings (object keys) and/or numbers (array indices).
 
           Path expressions are jq expressions like `.a`, but also `.[]`.
           There are two types of path expressions: ones that can match
@@ -847,15 +866,16 @@ sections:
 
           `path(exact_path_expression)` will produce the array
           representation of the path expression even if it does not
-          exist in `.`, if `.` is `null` or an array or an object.
+          exist in the input value, as long as that input value is `null`,
+          an array, or an object.
 
           `path(pattern)` will produce array representations of the
-          paths matching `pattern` if the paths exist in `.`.
+          paths matching `pattern` if the paths exist in the input object.
 
           Note that the path expressions are not different from normal
-          expressions.  The expression
+          expressions.  As a more complex example, the expression
           `path(..|select(type=="boolean"))` outputs all the paths to
-          boolean values in `.`, and only those paths.
+          boolean values in the input object, and only those paths.
 
         examples:
           - program: 'path(.a[0].b)'
@@ -868,8 +888,9 @@ sections:
       - title: "`del(path_expression)`"
         body: |
 
-          The builtin function `del` removes a key and its corresponding
-          value from an object.
+          `del` removes the key corresponding to a given
+          `path_expression`, and the associated value, from the input
+          object.
 
         examples:
           - program: 'del(.foo)'
@@ -879,11 +900,14 @@ sections:
             input: '["foo", "bar", "baz"]'
             output: ['["foo"]']
 
-      - title: "`getpath(PATHS)`"
+      - title: "`getpath(paths)`"
         body: |
 
-          The builtin function `getpath` outputs the values in `.` found
-          at each path in `PATHS`.
+          `getpath` outputs the values in the input object found at each
+          path in a given `paths` array.
+
+          (`paths` must be an array of paths, where each path is an array
+          of strings and numbers.)
 
         examples:
           - program: 'getpath(["a","b"])'
@@ -893,10 +917,14 @@ sections:
             input: '{"a":{"b":0, "c":1}}'
             output: ['[0, 1]']
 
-      - title: "`setpath(PATHS; VALUE)`"
+      - title: "`setpath(paths; value)`"
         body: |
 
-          The builtin function `setpath` sets the `PATHS` in `.` to `VALUE`.
+          `setpath` sets the keys represented by `paths` in the input
+          object to `value`.
+
+          `paths` must be an array of paths, where each path is an array
+          of strings and numbers.
 
         examples:
           - program: 'setpath(["a","b"]; 1)'
@@ -909,11 +937,13 @@ sections:
             input: 'null'
             output: ['[{"a":1}]']
 
-      - title: "`delpaths(PATHS)`"
+      - title: "`delpaths(paths)`"
         body: |
 
-          The builtin function `delpaths` sets the `PATHS` in `.`.
-          `PATHS` must be an array of paths, where each path is an array
+          `delpaths` removes the key corresponding to the given `paths`,
+          and their associated value, from the input object.
+
+          `paths` must be an array of paths, where each path is an array
           of strings and numbers.
 
         examples:
@@ -927,13 +957,14 @@ sections:
           These functions convert between an object and an array of
           key-value pairs. If `to_entries` is passed an object, then
           for each `k: v` entry in the input, the output array
-          includes `{"key": k, "value": v}`.
+          includes an entry-object like `{"key": k, "value": v}`.
 
           `from_entries` does the opposite conversion, and
           `with_entries(foo)` is a shorthand for `to_entries |
           map(foo) | from_entries`, useful for doing some operation to
-          all keys and values of an object. `from_entries` accepts key, Key,
-          name, Name, value and Value as keys.
+          all keys and values of an object. `from_entries` accepts `key`,
+          `Key`, `name`, `Name`, `value` and `Value` as the properties of
+          an individual entry-object.
 
         examples:
           - program: 'to_entries'
@@ -950,9 +981,8 @@ sections:
       - title: "`select(boolean_expression)`"
         body: |
 
-          The function `select(foo)` produces its input unchanged if
-          `foo` returns true for that input, and produces no output
-          otherwise.
+          `select(x)` produces its input unchanged if `x` returns true for
+          that input, and produces no output otherwise.
 
           It's useful for filtering lists: `[1,2,3] | map(select(. >= 2))`
           will give you `[2,3]`.
@@ -969,10 +999,38 @@ sections:
       - title: "`arrays`, `objects`, `iterables`, `booleans`, `numbers`, `normals`, `finites`, `strings`, `nulls`, `values`, `scalars`"
         body: |
 
-          These built-ins select only inputs that are arrays, objects,
-          iterables (arrays or objects), booleans, numbers, normal
-          numbers, finite numbers, strings, null, non-null values, and
-          non-iterables, respectively.
+          These built-ins filter out some of their inputs, acting as the
+          identity-filter for 'allowed' types, while ignoring 'rejected'
+          ones:
+
+          - `arrays` allows only **array** values, rejecting others
+
+          - `objects` allows only **object** values, rejecting others
+
+          - `iterables` allows only **array** or **object** values,
+              rejecting everything else
+
+          - `scalars` **rejects** both 'array' and 'object' values,
+              accepting everything else
+
+          - `booleans` allows only **boolean** values, rejecting others
+
+          - `strings` allows only **string** values, rejecting others
+
+          - `numbers` allows only **numeric** values, rejecting others
+
+          - `normals` allows only **normal numbers**, rejecting `0`,
+              `NaN`, `Infinity`, sub-normal (very small, imprecise)
+              floating-points, and all non-numeric values
+
+              (See: <https://en.wikipedia.org/wiki/Denormal_number>)
+
+          - `finites` allows only **finite numbers**, rejecting `NaN`,
+              `Infinity`, and all non-numeric values
+
+          - `nulls` allows only the **null** value, rejecting others
+
+          - `values` **rejects** the `null` value, accepting others
 
         examples:
           - program: '.[]|numbers'
@@ -997,34 +1055,37 @@ sections:
       - title: "`error(message)`"
         body: |
 
-          Produces an error, just like `.a` applied to values other than
-          null and objects would, but with the given message as the
-          error's value.  Errors can be caught with try/catch; see below.
+          `error` produces an error (like, for instance, that produced if
+          `.a` is applied to values other than an object or `null`); with
+          the given message as the error's value.  Errors can be caught
+          with `try`/`catch` - see below.
 
       - title: "`halt`"
         body: |
 
-          Stops the jq program with no further outputs.  jq will exit
-          with exit status `0`.
+          `halt` will stop the jq program with no further outputs.  This
+          does not indicate an erroneous condition - jq will exit with
+          the 'success' exit status, `0`.
 
       - title: "`halt_error`, `halt_error(exit_code)`"
         body: |
 
-          Stops the jq program with no further outputs.  The input will
-          be printed on `stderr` as raw output (i.e., strings will not
-          have double quotes) with no decoration, not even a newline.
+          `halt_error` stops the jq program with no further outputs.  The
+          input will be printed on `stderr` as raw output (i.e., strings
+          will not have double quotes) with no decoration - not even a
+          newline.
 
-          The given `exit_code` (defaulting to `5`) will be jq's exit
-          status.
+          The given integer `exit_code` (defaulting to `5`) will be used
+          as jq's exit status.
 
           For example, `"Error: somthing went wrong\n"|halt_error(1)`.
 
       - title: "`$__loc__`"
         body: |
 
-          Produces an object with a "file" key and a "line" key, with
-          the filename and line number where `$__loc__` occurs, as
-          values.
+          `$__loc__` produces an object with a "file" key and a "line"
+          key, with the filename and line number in the source-code where
+          `$__loc__` occurs as values.
 
         examples:
           - program: 'try error("\($__loc__)") catch .'
@@ -1035,12 +1096,12 @@ sections:
         body: |
 
           `paths` outputs the paths to all the elements in its input
-          (except it does not output the empty list, representing .
-          itself).
+          (except it does not output the empty list, representing the
+          input's root-object itself).
 
-          `paths(f)` outputs the paths to any values for which `f` is true.
-          That is, `paths(numbers)` outputs the paths to all numeric
-          values.
+          `paths(x)` outputs the paths to any values for which `x` is
+          `true`.  That is, `paths(numbers)` outputs the paths to all
+          numeric values.
 
           `leaf_paths` is an alias of `paths(scalars)`; `leaf_paths` is
           *deprecated* and will be removed in the next major release.
@@ -1056,11 +1117,11 @@ sections:
       - title: "`add`"
         body: |
 
-          The filter `add` takes as input an array, and produces as
-          output the elements of the array added together. This might
-          mean summed, concatenated or merged depending on the types
-          of the elements of the input array - the rules are the same
-          as those for the `+` operator (described above).
+          `add` takes as input an array, and produces as output the
+          elements of the array added together. This might mean summed,
+          concatenated, or merged depending on the types of the elements
+          of the input array - the rules are the same as those for the `+`
+          operator (described above).
 
           If the input is an empty array, `add` returns `null`.
 
@@ -1078,17 +1139,17 @@ sections:
       - title: "`any`, `any(condition)`, `any(generator; condition)`"
         body: |
 
-          The filter `any` takes as input an array of boolean values,
-          and produces `true` as output if any of the elements of
-          the array are `true`.
-
-          If the input is an empty array, `any` returns `false`.
+          `any` takes as input an array of boolean values, and produces
+          `true` as output if any of the elements of the array are `true`.
 
           The `any(condition)` form applies the given condition to the
-          elements of the input array.
+          (now arbitrarily-typed) elements of the input array, and uses
+          the result as the aforementioned 'array of boolean values.'
 
           The `any(generator; condition)` form applies the given
           condition to all the outputs of the given generator.
+
+          If the input is an empty array, `any` returns `false`.
 
         examples:
           - program: any
@@ -1104,12 +1165,13 @@ sections:
       - title: "`all`, `all(condition)`, `all(generator; condition)`"
         body: |
 
-          The filter `all` takes as input an array of boolean values,
-          and produces `true` as output if all of the elements of
-          the array are `true`.
+          `all` takes as input an array of boolean values, and produces
+          `true` as output if **all** of the elements of the array are
+          `true`.
 
           The `all(condition)` form applies the given condition to the
-          elements of the input array.
+          (now arbitrarily-typed) elements of the input array, and uses
+          the result as the aforementioned 'array of boolean values.'
 
           The `all(generator; condition)` form applies the given
           condition to all the outputs of the given generator.
@@ -1130,13 +1192,15 @@ sections:
       - title: "`flatten`, `flatten(depth)`"
         body: |
 
-          The filter `flatten` takes as input an array of nested arrays,
-          and produces a flat array in which all arrays inside the original
-          array have been recursively replaced by their values. You can pass
-          an argument to it to specify how many levels of nesting to flatten.
+          `flatten` takes as input an array of other (arbitrarily-nested)
+          arrays, and produces a flat array in which all arrays inside the
+          original array have been recursively replaced by their values.
 
-          `flatten(2)` is like `flatten`, but going only up to two
-          levels deep.
+          You can pass a integer `depth` argument to it to specify how
+          many levels of nesting to flatten: `flatten(2)` is like
+          `flatten`, but going only up to two levels deep; leaving arrays
+          found inside children of the root array intact in the output
+          array.
 
         examples:
           - program: flatten
@@ -1155,16 +1219,16 @@ sections:
       - title: "`range(upto)`, `range(from;upto)` `range(from;upto;by)`"
         body: |
 
-          The `range` function produces a range of numbers. `range(4;10)`
-          produces 6 numbers, from 4 (inclusive) to 10 (exclusive). The numbers
-          are produced as separate outputs. Use `[range(4;10)]` to get a range as
-          an array.
+          `range` produces a range of numbers as multiple, individual
+          outputs.  `range(4;10)` produces 6 numbers, from 4 (inclusive)
+          to 10 (exclusive). As the numbers are produced as separate
+          outputs, use `[range(4;10)]` to get a range as an array.
 
           The one argument form generates numbers from 0 to the given
-          number, with an increment of 1.
+          `upto` number, with an increment of 1.
 
-          The two argument form generates numbers from `from` to `upto`
-          with an increment of 1.
+          The two argument form generates numbers between `from` and
+          `upto`, with an increment of 1.
 
           The three argument form generates numbers `from` to `upto`
           with an increment of `by`.
@@ -1192,7 +1256,7 @@ sections:
       - title: "`floor`"
         body: |
 
-          The `floor` function returns the floor of its numeric input.
+          `floor` returns the integer floor of its numeric input.
 
         examples:
           - program: 'floor'
@@ -1202,19 +1266,24 @@ sections:
       - title: "`sqrt`"
         body: |
 
-          The `sqrt` function returns the square root of its numeric input.
+          `sqrt` returns the square-root of its numeric input, or `null`
+          if the number does not have a real square-root.
 
         examples:
           - program: 'sqrt'
             input: '9'
             output: ['3']
 
+          - program: 'sqrt'
+            input: '-1'
+            output: ['null']
+
       - title: "`tonumber`"
         body: |
 
-          The `tonumber` function parses its input as a number. It
-          will convert correctly-formatted strings to their numeric
-          equivalent, leave numbers alone, and give an error on all other input.
+          `tonumber` parses its input as a number. It will convert
+          correctly-formatted strings to their numeric equivalent, leave
+          numbers alone, and give an error on all other input.
 
         examples:
           - program: '.[] | tonumber'
@@ -1224,9 +1293,8 @@ sections:
       - title: "`tostring`"
         body: |
 
-          The `tostring` function prints its input as a
-          string. Strings are left unchanged, and all other values are
-          JSON-encoded.
+          `tostring` prints its input as a string. Strings are left
+          unchanged, and all other values are JSON-encoded.
 
         examples:
           - program: '.[] | tostring'
@@ -1236,9 +1304,9 @@ sections:
       - title: "`type`"
         body: |
 
-          The `type` function returns the type of its argument as a
-          string, which is one of null, boolean, number, string, array
-          or object.
+          `type` returns the type of its argument as a string, which is
+          one of `"null"`, `"boolean"`, `"number"`, `"string"`, `"array"`
+          or `"object"`.
 
         examples:
           - program: 'map(type)'
@@ -1249,17 +1317,26 @@ sections:
         body: |
 
           Some arithmetic operations can yield infinities and "not a
-          number" (NaN) values.  The `isinfinite` builtin returns `true`
-          if its input is infinite.  The `isnan` builtin returns `true`
-          if its input is a NaN.  The `infinite` builtin returns a
-          positive infinite value.  The `nan` builtin returns a NaN.
-          The `isnormal` builtin returns true if its input is a normal
-          number.
+          number" (`NaN`) values. These builtins test for those values:
+
+          - `isinfinite` returns `true` if its input is an infinite number
+
+          - `isnan` returns `true` if its input is `NaN`
+
+          - `infinite` produces a positive infinite value
+
+          - `nan` returns a `NaN` value
+
+          - `isnormal` returns `true` if its input is a normal number, and
+              `false` if the input is not (`0`, `NaN`, an infinite number,
+              or a sub-normal - a very small, imprecise floating-point.)
 
           Note that division by zero raises an error.
 
           Currently most arithmetic operations operating on infinities,
           NaNs, and sub-normals do not raise errors.
+
+          (See: <https://en.wikipedia.org/wiki/Denormal_number>)
 
         examples:
           - program: '.[] | (infinite * .) < 0'
@@ -1272,14 +1349,14 @@ sections:
       - title: "`sort, sort_by(path_expression)`"
         body: |
 
-          The `sort` functions sorts its input, which must be an
-          array. Values are sorted in the following order:
+          `sort` sorts its input, which must be an array. Values are
+          sorted in the following order:
 
           * `null`
           * `false`
           * `true`
           * numbers
-          * strings, in alphabetical order (by unicode codepoint value)
+          * strings, in Unicode codepoint-order
           * arrays, in lexical order
           * objects
 
@@ -1305,14 +1382,13 @@ sections:
       - title: "`group_by(path_expression)`"
         body: |
 
-          `group_by(.foo)` takes as input an array, groups the
-          elements having the same `.foo` field into separate arrays,
-          and produces all of these arrays as elements of a larger
-          array, sorted by the value of the `.foo` field.
+          `group_by(x)` takes as input an array, groups the elements
+          for which `x` produces the same output into separate arrays, and
+          produces all of these arrays as elements of a larger array,
+          sorted by the value of the results of `x`.
 
-          Any jq expression, not just a field access, may be used in
-          place of `.foo`. The sorting order is the same as described
-          in the `sort` function above.
+          The sorting order is the same as described in the `sort`
+          function above.
 
         examples:
           - program: 'group_by(.foo)'
@@ -1339,14 +1415,13 @@ sections:
       - title: "`unique`, `unique_by(path_exp)`"
         body: |
 
-          The `unique` function takes as input an array and produces
-          an array of the same elements, in sorted order, with
-          duplicates removed.
+          `unique` takes as input an array and produces an array of the
+          same elements, in sorted order, with duplicates removed.
 
-          The `unique_by(path_exp)` function will keep only one element
-          for each value obtained by applying the argument. Think of it
-          as making an array by taking one element out of every group
-          produced by `group`.
+          `unique_by(path_exp)` will keep only one element for each value
+          obtained by applying the argument. Think of it as making an
+          array by taking one element out of every group produced by
+          `group`.
 
         examples:
           - program: 'unique'
@@ -1362,7 +1437,8 @@ sections:
       - title: "`reverse`"
         body: |
 
-          This function reverses an array.
+          `reverse`, given an array as input, produces an array containing
+          the same elements, but in reversed order.
 
         examples:
           - program: 'reverse'
@@ -1372,14 +1448,24 @@ sections:
       - title: "`contains(element)`"
         body: |
 
-          The filter `contains(b)` will produce true if b is
-          completely contained within the input. A string B is
-          contained in a string A if B is a substring of A. An array B
-          is contained in an array A if all elements in B are
-          contained in any element in A. An object B is contained in
-          object A if all of the values in B are contained in the
-          value in A with the same key. All other types are assumed to
-          be contained in each other if they are equal.
+          `contains(x)` will produce `true` if the result of `x` is
+          completely contained within the input. The meaning of
+          'contained' varies by the type of the input to `contains`:
+
+          - Given a **string** `input`, a string `x` is 'contained' if
+              `x` is a substring of the `input`.
+
+          - Given an **array** `input`, an array `x` is 'contained' if all
+              elements in `x` are also 'contained' by at least one element
+              of the `input` (in the same sense - that is, by recursively
+              applying `contains` to each element of the `input`.)
+
+          - Given an **object** `input`, an object `x` is 'contained' if,
+              for each key `k` in `x`, `x.k` is also 'contained' in
+              `input.k`.
+
+          All other types are assumed to be 'contained' in each other if
+          they are equal.
 
         examples:
           - program: 'contains("bar")'
@@ -1401,10 +1487,10 @@ sections:
       - title: "`indices(s)`"
         body: |
 
-          Outputs an array containing the indices in `.` where `s`
-          occurs.  The input may be an array, in which case if `s` is an
-          array then the indices output will be those where all elements
-          in `.` match those of `s`.
+          Outputs an array containing the indices in the input iterable at
+          which `s` occurs.  The input may be an array, in which case if
+          `s` is an array then the indices output will be those where
+          **all** elements in the input array match those of `s`.
 
         examples:
           - program: 'indices(", ")'
@@ -1431,12 +1517,12 @@ sections:
             input: '"a,b, cd, efg, hijk"'
             output: ['12']
 
-      - title: "`inside`"
+      - title: "`inside(value)`"
         body: |
 
-          The filter `inside(b)` will produce true if the input is
-          completely contained within b. It is, essentially, an
-          inversed version of `contains`.
+          `inside(x)` will produce `true` if the input is completely
+          contained within `x`. It is, essentially, an inversed version of
+          `contains`.
 
         examples:
           - program: 'inside("foobar")'
@@ -1458,7 +1544,7 @@ sections:
       - title: "`startswith(str)`"
         body: |
 
-          Outputs `true` if . starts with the given string argument.
+          Outputs `true` if the input string starts with the given `str`.
 
         examples:
           - program: '[.[]|startswith("foo")]'
@@ -1468,7 +1554,7 @@ sections:
       - title: "`endswith(str)`"
         body: |
 
-          Outputs `true` if . ends with the given string argument.
+          Outputs `true` if the input string ends with the given `str`.
 
         examples:
           - program: '[.[]|endswith("foo")]'
@@ -1478,9 +1564,10 @@ sections:
       - title: "`combinations`, `combinations(n)`"
         body: |
 
-          Outputs all combinations of the elements of the arrays in the
-          input array. If given an argument `n`, it outputs all combinations
-          of `n` repetitions of the input array.
+          `combinations` outputs all combinations of the elements of the
+          sub-arrays in the input multi-dimensional array. If given an
+          integer argument `n`, it outputs all combinations of `n`
+          repetitions of the input flat-array.
 
         examples:
           - program: 'combinations'
@@ -1493,7 +1580,7 @@ sections:
       - title: "`ltrimstr(str)`"
         body: |
 
-          Outputs its input with the given prefix string removed, if it
+          Outputs its input with the given prefix `str` removed, if it
           starts with it.
 
         examples:
@@ -1504,7 +1591,7 @@ sections:
       - title: "`rtrimstr(str)`"
         body: |
 
-          Outputs its input with the given suffix string removed, if it
+          Outputs its input with the given suffix `str` removed, if it
           ends with it.
 
         examples:
@@ -1516,7 +1603,7 @@ sections:
         body: |
 
           Converts an input string into an array of the string's
-          codepoint numbers.
+          Unicode codepoints, as integers.
 
         examples:
           - program: 'explode'
@@ -1526,34 +1613,35 @@ sections:
       - title: "`implode`"
         body: |
 
-          The inverse of explode.
+          The inverse of `explode`.
 
         examples:
           - program: 'implode'
             input: '[65, 66, 67]'
             output: ['"ABC"']
 
-      - title: "`split(str)`"
+      - title: "`split(separator)`"
         body: |
 
-          Splits an input string on the separator argument.
+          `split` an input string on occurrences of the entire `separator`
+          string.
 
         examples:
           - program: 'split(", ")'
             input: '"a, b,c,d, e, "'
             output: ['["a","b,c,d","e",""]']
 
-      - title: "`join(str)`"
+      - title: "`join(separator)`"
         body: |
 
-          Joins the array of elements given as input, using the
-          argument as separator. It is the inverse of `split`: that is,
-          running `split("foo") | join("foo")` over any input string
+          `join` the array of elements given as input, inserting the
+          `separator` between elements. It is the inverse of `split`: that
+          is, running `split("x") | join("x")` over any input string
           returns said input string.
 
           Numbers and booleans in the input are converted to strings.
-          Null values are treated as empty strings. Arrays and objects
-          in the input are not supported.
+          `null` values are treated as empty strings. Arrays and objects
+          in the input are erroneous.
 
         examples:
           - program: 'join(", ")'
@@ -1566,42 +1654,42 @@ sections:
       - title: "`ascii_downcase`, `ascii_upcase`"
         body: |
 
-          Emit a copy of the input string with its alphabetic characters (a-z and A-Z)
-          converted to the specified case.
+          Emit a copy of the input string with its alphabetic characters
+          (`a-z` and `A-Z`) converted to the specified case.
 
         example:
           - program: 'ascii_upcase'
             input: '"useful but not for é"'
             output: '"USEFUL BUT NOT FOR é"'
 
-      - title: "`while(cond; update)`"
+      - title: "`while(condition; update)`"
         body: |
 
-          The `while(cond; update)` function allows you to repeatedly
-          apply an update to `.` until `cond` is false.
+          `while` allows you to repeatedly apply the expression `update`
+          to the input until `condition` produces `false`.
 
           Note that `while(cond; update)` is internally defined as a
           recursive jq function.  Recursive calls within `while` will
           not consume additional memory if `update` produces at most one
-          output for each input.  See advanced topics below.
+          output for each input.  See 'advanced features' below.
 
         examples:
           - program: '[while(.<100; .*2)]'
             input: '1'
             output: ['[1,2,4,8,16,32,64]']
 
-      - title: "`until(cond; next)`"
+      - title: "`until(condition; update)`"
         body: |
 
-          The `until(cond; next)` function allows you to repeatedly
-          apply the expression `next`, initially to `.` then to its own
-          output, until `cond` is true.  For example, this can be used
-          to implement a factorial function (see below).
+          `until` allows you to repeatedly apply the expression `update`,
+          initially to the input value, and subsequently to its own
+          output, until `condition` produces `true`.  For example, this
+          can be used to implement a factorial function (see below).
 
-          Note that `until(cond; next)` is internally defined as a
+          Note that `until(cond; update)` is internally defined as a
           recursive jq function.  Recursive calls within `until()` will
-          not consume additional memory if `next` produces at most one
-          output for each input.  See advanced topics below.
+          not consume additional memory if `update` produces at most one
+          output for each input.  See 'advanced features' below.
 
         examples:
           - program: '[.,1]|until(.[0] < 1; [.[0] - 1, .[1] * .[0]])|.[1]'
@@ -1609,12 +1697,13 @@ sections:
             output: ['24']
 
 
-      - title: "`recurse(f)`, `recurse`, `recurse(f; condition)`, `recurse_down`"
+      - title: "`recurse(expr)`, `recurse`, `recurse(expr; condition)`, `recurse_down`"
         body: |
 
-          The `recurse(f)` function allows you to search through a
-          recursive structure, and extract interesting data from all
-          levels. Suppose your input represents a filesystem:
+          `recurse(expr)` allows you to search through a recursive structure,
+          and extract relevant data from all levels.
+
+          Suppose your input represents a filesystem:
 
               {"name": "/", "children": [
                 {"name": "/bin", "children": [
@@ -1634,22 +1723,23 @@ sections:
           When called without an argument, `recurse` is equivalent to
           `recurse(.[]?)`.
 
-          `recurse(f)` is identical to `recurse(f; . != null)` and can be
-          used without concerns about recursion depth.
+          `recurse(expr)` is identical to `recurse(expr; . != null)` and
+          can be used without concerns about recursion depth.
 
-          `recurse(f; condition)` is a generator which begins by
-          emitting . and then emits in turn .|f, .|f|f, .|f|f|f, ...  so long
-          as the computed value satisfies the condition. For example,
-          to generate all the integers, at least in principle, one
-          could write `recurse(.+1; true)`.
+          `recurse(expr; condition)` is a generator which begins by
+          emitting `.`, and then emits in turn: `.|expr`, `.|expr|expr`,
+          `.|expr|expr|expr`, ... and so on, as long as the computed value
+          satisfies the condition. For example, to generate all the
+          integers, at least in principle, one could write `recurse(.+1;
+          true)`.
 
           For legacy reasons, `recurse_down` exists as an alias to
           calling `recurse` without arguments. This alias is considered
           *deprecated* and will be removed in the next major release.
 
-          The recursive calls in `recurse` will not consume additional
-          memory whenever `f` produces at most a single output for each
-          input.
+          The recursive calls in `recurse(expr)` will not consume
+          additional memory whenever `expr` produces at most a single
+          output for each input.
 
         examples:
           - program: 'recurse(.foo[])'
@@ -1675,20 +1765,20 @@ sections:
                 - 4
                 - 16
 
-      - title: "`walk(f)`"
+      - title: "`walk(expr)`"
         body: |
 
-          The `walk(f)` function applies f recursively to every
-          component of the input entity.  When an array is
-          encountered, f is first applied to its elements and then to
-          the array itself; when an object is encountered, f is first
-          applied to all the values and then to the object.  In
-          practice, f will usually test the type of its input, as
-          illustrated in the following examples.  The first example
-          highlights the usefulness of processing the elements of an
-          array of arrays before processing the array itself.  The second
-          example shows how all the keys of all the objects within the
-          input can be considered for alteration.
+          `walk` applies the given `expr` recursively to every component
+          of the input entity.  When an array is encountered, `expr` is
+          first applied to each of its elements, and then to the array
+          itself; when an object is encountered, `expr` is first applied
+          to all the values and then to the object.  In practice, `expr`
+          will usually test the type of its input, as illustrated in the
+          following examples.  The first example highlights the usefulness
+          of processing the elements of an array of arrays before
+          processing the array itself.  The second example shows how all
+          the keys of all the objects within the input can be considered
+          for alteration.
 
         examples:
           - program: 'walk(if type == "array" then sort else . end)'
@@ -1724,7 +1814,7 @@ sections:
       - title: "`transpose`"
         body: |
 
-          Transpose a possibly jagged matrix (an array of arrays).
+          `transpose` a possibly jagged matrix (an array of arrays).
           Rows are padded with nulls so the result is always rectangular.
 
         examples:
@@ -1735,13 +1825,13 @@ sections:
       - title: "`bsearch(x)`"
         body: |
 
-          bsearch(x) conducts a binary search for x in the input
-          array.  If the input is sorted and contains x, then
-          bsearch(x) will return its index in the array; otherwise, if
-          the array is sorted, it will return (-1 - ix) where ix is an
+          `bsearch` conducts a binary search for `x` in the input
+          array.  If the input is sorted and `contains` `x`, then
+          `bsearch(x)` will return its index in the array; otherwise, if
+          the array is sorted, it will return `(-1 - ix)` where `ix` is an
           insertion point such that the array would still be sorted
-          after the insertion of x at ix.  If the array is not sorted,
-          bsearch(x) will return an integer that is probably of no
+          after the insertion of `x` at `ix`.  If the array is not sorted,
+          `bsearch(x)` will return an integer that is probably of no
           interest.
 
         examples:
@@ -1762,6 +1852,11 @@ sections:
           after a backslash. Whatever the expression returns will be
           interpolated into the string.
 
+          (Be careful of your shell's escaping, when using this - for
+          instance, depending on your shell, you may need to escape the
+          slash, the quotes, or both, to use this when entering jq filters
+          at the command-line.)
+
         examples:
           - program: '"The input was \(.), which is one less than \(.+1)"'
             input: '42'
@@ -1771,9 +1866,11 @@ sections:
         body: |
 
           The `tojson` and `fromjson` builtins dump values as JSON texts
-          or parse JSON texts into values, respectively.  The tojson
-          builtin differs from tostring in that tostring returns strings
-          unmodified, while tojson encodes strings as JSON strings.
+          or parse JSON texts into values, respectively.
+
+          (Note that while both `tojson` and `tostring` encode values to
+          JSON, `tostring` will pass strings through unmodified, whereas
+          `tojson` will JSON-encode those strings themselves.)
 
         examples:
           - program: '[.[]|tostring]'
@@ -1794,59 +1891,60 @@ sections:
           like HTML or XML, and so forth. `@foo` can be used as a
           filter on its own, the possible escapings are:
 
-          * `@text`:
+          - `@text`:
 
-            Calls `tostring`, see that function for details.
+            Equivalent to `tostring`.
 
-          * `@json`:
+          - `@json`:
 
-            Serializes the input as JSON.
+            Equivalent to `tojson`
 
-          * `@html`:
+          - `@html`:
 
             Applies HTML/XML escaping, by mapping the characters
             `<>&'"` to their entity equivalents `&lt;`, `&gt;`,
-            `&amp;`, `&apos;`, `&quot;`.
+            `&amp;`, `&apos;`, and `&quot;`.
 
-          * `@uri`:
+          - `@uri`:
 
             Applies percent-encoding, by mapping all reserved URI
             characters to a `%XX` sequence.
 
-          * `@csv`:
+          - `@csv`:
 
             The input must be an array, and it is rendered as CSV
             with double quotes for strings, and quotes escaped by
             repetition.
 
-          * `@tsv`:
+          - `@tsv`:
 
             The input must be an array, and it is rendered as TSV
-            (tab-separated values). Each input array will be printed as
-            a single line. Fields are separated by a single
-            tab (ascii `0x09`). Input characters line-feed (ascii `0x0a`),
-            carriage-return (ascii `0x0d`), tab (ascii `0x09`) and
-            backslash (ascii `0x5c`) will be output as escape sequences
-            `\n`, `\r`, `\t`, `\\` respectively.
+            (tab-separated values). Each input array will be printed as a
+            single line. Fields are separated by a single tab (ASCII byte
+            `0x09`). Input characters line-feed (ASCII byte `0x0a`),
+            carriage-return (ASCII byte `0x0d`), tab (ASCII byte `0x09`)
+            and backslash (ASCII byte `0x5c`) will be output as escape
+            sequences `\n`, `\r`, `\t`, `\\` respectively.
 
-          * `@sh`:
+          - `@sh`:
 
             The input is escaped suitable for use in a command-line
             for a POSIX shell. If the input is an array, the output
             will be a series of space-separated strings.
 
-          * `@base64`:
+          - `@base64`:
 
             The input is converted to base64 as specified by RFC 4648.
 
-          * `@base64d`:
+          - `@base64d`:
 
-            The inverse of `@base64`, input is decoded as specified by RFC 4648.
-            Note\: If the decoded string is not UTF-8, the results are undefined.
+            The inverse of `@base64`, input is decoded as specified by RFC
+            4648.  Note\: If the decoded string is not UTF-8, the results
+            are undefined.
 
           This syntax can be combined with string interpolation in a
           useful way. You can follow a `@foo` token with a string
-          literal. The contents of the string literal will *not* be
+          literal. The contents of the string literal will **not** be
           escaped. However, all interpolations made inside that string
           literal will be escaped. For instance,
 
@@ -1961,13 +2059,13 @@ sections:
 
           jq provides a few SQL-style operators.
 
-           * INDEX(stream; index_expression):
+           - INDEX(stream; index_expression):
 
              This builtin produces an object whose keys are computed by
              the given index expression applied to each value from the
              given stream.
 
-           * JOIN($idx; stream; idx_expr; join_expr):
+           - JOIN($idx; stream; idx_expr; join_expr):
 
              This builtin joins the values from the given stream to the
              given index.  The index's keys are computed by applying the
@@ -1976,22 +2074,23 @@ sections:
              value from the index is fed to the given join expression to
              produce each result.
 
-           * JOIN($idx; stream; idx_expr):
+           - JOIN($idx; stream; idx_expr):
 
              Same as `JOIN($idx; stream; idx_expr; .)`.
 
-           * JOIN($idx; idx_expr):
+           - JOIN($idx; idx_expr):
 
-             This builtin joins the input `.` to the given index, applying
-             the given index expression to `.` to compute the index key.
-             The join operation is as described above.
+             This builtin joins the input value to the given index,
+             applying the given index expression to the input value to
+             compute the index key.  The join operation is as described
+             above.
 
-           * IN(s):
+           - IN(s):
 
-             This builtin outputs `true` if `.` appears in the given
-             stream, otherwise it outputs `false`.
+             This builtin outputs `true` if the input value appears in the
+             given stream, otherwise it outputs `false`.
 
-           * IN(source; s):
+           - IN(source; s):
 
              This builtin outputs `true` if any value in the source stream
              appears in the second stream, otherwise it outputs `false`.
@@ -1999,24 +2098,26 @@ sections:
       - title: "`builtins`"
         body: |
 
-          Returns a list of all builtin functions in the format `name/arity`.
-          Since functions with the same name but different arities are considered
-          separate functions, `all/0`, `all/1`, and `all/2` would all be present
-          in the list.
+          Returns a list of all builtin functions in the format
+          `name/arity`.  Since functions with the same name but different
+          arities are considered separate functions by `jq`, `all/0`,
+          `all/1`, and `all/2` would all be present in the list.
 
   - title: Conditionals and Comparisons
     entries:
       - title: "`==`, `!=`"
         body: |
 
-          The expression 'a == b' will produce 'true' if the result of a and b
-          are equal (that is, if they represent equivalent JSON documents) and
-          'false' otherwise. In particular, strings are never considered equal
-          to numbers. If you're coming from Javascript, jq's == is like
-          Javascript's === - considering values equal only when they have the
-          same type as well as the same value.
+          The expression 'a == b' will produce 'true' if the result of a
+          and b are equal (that is, if they represent equivalent JSON
+          documents) and 'false' otherwise. In particular, strings are
+          never considered equal to numbers. If you're coming from
+          JavaScript, jq's `==` is like JavaScript's `===` - considering
+          values equal only when they have the same type as well as the
+          same value.
 
-          != is "not equal", and 'a != b' returns the opposite value of 'a == b'
+          `!=` is "not equal", and 'a != b' returns the opposite value of
+          'a == b'
 
         examples:
           - program: '.[] == 1'
@@ -2026,23 +2127,24 @@ sections:
       - title: if-then-else
         body: |
 
-          `if A then B else C end` will act the same as `B` if `A`
-          produces a value other than false or null, but act the same
-          as `C` otherwise.
+          `if COND then FIRST else SECOND end` will act the same as
+          `FIRST` if `COND` produces a value other than `false` or `null`,
+          but act the same as `SECOND` otherwise.
 
-          Checking for false or null is a simpler notion of
-          "truthiness" than is found in Javascript or Python, but it
+          Checking for `false` or `null` is a simpler notion of
+          "truthiness" than is found in JavaScript or Python, but it
           means that you'll sometimes have to be more explicit about
           the condition you want: you can't test whether, e.g. a
           string is empty using `if .name then A else B end`, you'll
           need something more like `if (.name | length) > 0 then A else
           B end` instead.
 
-          If the condition `A` produces multiple results, then `B` is evaluated
-          once for each result that is not false or null, and `C` is evaluated
-          once for each false or null.
+          If the `COND` produces multiple results, then `FIRST` is
+          evaluated once for each result that is not `false` or `null`,
+          and `SECOND` is evaluated once for each `false` or `null`.
 
-          More cases can be added to an if using `elif A then B` syntax.
+          More cases can be added to an if using `elif COND2 then THIRD`
+          syntax.
 
         examples:
           - program: |-
@@ -2071,12 +2173,13 @@ sections:
             input: 2
             output: ['true']
 
-      - title: and/or/not
+      - title: "`and` / `or` / `not`"
         body: |
 
-          jq supports the normal Boolean operators and/or/not. They have the
-          same standard of truth as if expressions - false and null are
-          considered "false values", and anything else is a "true value".
+          jq supports the normal Boolean operators `and`/`or`/`not`. They
+          have the same standard of truth as `if` expressions - `false`
+          and `null` are considered "false values", and anything else is a
+          "true value".
 
           If an operand of one of these operators produces multiple
           results, the operator itself will produce a result for each input.
@@ -2086,12 +2189,12 @@ sections:
           rather than with special syntax, as in `.foo and .bar |
           not`.
 
-          These three only produce the values "true" and "false", and
-          so are only useful for genuine Boolean operations, rather
-          than the common Perl/Python/Ruby idiom of
-          "value_that_may_be_null or default". If you want to use this
-          form of "or", picking between two values rather than
-          evaluating a condition, see the "//" operator below.
+          These three only produce the values `true` and `false`, and so
+          are only useful for genuine Boolean operations, rather than the
+          common Perl/Python/Ruby idiom of `value_that_may_be_null or
+          default`. If you want to use this form of `or`, picking between
+          two values rather than evaluating a condition, see the `//`
+          operator below.
 
         examples:
           - program: '42 and "a string"'
@@ -2113,15 +2216,16 @@ sections:
       - title: "Alternative operator: `//`"
         body: |
 
-          A filter of the form `a // b` produces the same
-          results as `a`, if `a` produces results other than `false`
-          and `null`. Otherwise, `a // b` produces the same results as `b`.
+          A filter of the form `first // second` produces the same results
+          as `first`, if `first` produces results other than `false` and
+          `null`. Otherwise, `first // second` produces the same results
+          as `second`.
 
           This is useful for providing defaults: `.foo // 1` will
           evaluate to `1` if there's no `.foo` element in the
           input. It's similar to how `or` is sometimes used in Python
           (jq's `or` operator is reserved for strictly Boolean
-          operations).
+          operations - see above.)
 
         examples:
           - program: '.foo // 42'
@@ -2134,13 +2238,19 @@ sections:
       - title: try-catch
         body: |
 
-          Errors can be caught by using `try EXP catch EXP`.  The first
-          expression is executed, and if it fails then the second is
-          executed with the error message.  The output of the handler,
-          if any, is output as if it had been the output of the
-          expression to try.
+          Errors created by improperly invoked filters, missing
+          properties, or the `error` builtin,  can be caught by using
+          `try EXPR catch HANDLE`.  The first `EXPR` is executed, and
+          if it fails then the second `HANDLE` is executed with the error
+          message as an input string.
 
-          The `try EXP` form uses `empty` as the exception handler.
+          In the first case, the output of the entire `try` expression is
+          the output of the (successful) `EXPR`; in the latter, the final
+          output is that of the `HANDLE` expression instead.
+
+          The `try EXPR` form, without a `catch` clause, uses `empty` as
+          the exception handler. (See? We told you it was useful on
+          occasion!)
 
         examples:
           - program: 'try .a catch ". is not an object"'
@@ -2156,8 +2266,8 @@ sections:
       - title: Breaking out of control structures
         body: |
 
-          A convenient use of try/catch is to break out of control
-          structures like `reduce`, `foreach`, `while`, and so on.
+          A convenient use of `try` is to break out of control structures
+          like `reduce`, `foreach`, `while`, and so on.
 
           For example:
 
@@ -2166,7 +2276,8 @@ sections:
               # But if the error caught is not "break" then re-raise it.
               try repeat(exp) catch .=="break" then empty else error;
 
-          jq has a syntax for named lexical labels to "break" or "go (back) to":
+          jq has a syntax for named lexical labels to "break" or "go
+          (back) to":
 
               label $out | ... break $out ...
 
@@ -2190,7 +2301,7 @@ sections:
       - title: "Error Suppression / Optional Operator: `?`"
         body: |
 
-          The `?` operator, used as `EXP?`, is shorthand for `try EXP`.
+          The `?` operator, used as `EXPR?`, is shorthand for `try EXPR`.
 
         examples:
           - program: '[.[]|(.a)?]'
@@ -2201,50 +2312,73 @@ sections:
   - title: Regular expressions (PCRE)
     body: |
 
-      jq uses the Oniguruma regular expression library, as do php,
-      ruby, TextMate, Sublime Text, etc, so the description here
-      will focus on jq specifics.
+      jq uses the Oniguruma regular expression library, - the same used by
+      many other regular-expression environments (including PHP, Ruby,
+      TextMate, Sublime Text, etc); so the description here will focus on
+      jq specifics.
+
+      (For more information about regular expressions, see:
+
+      - <https://www.regular-expressions.info>,
+
+      - or Zed Shaw's excellent book, "Learn Regular Expressions the Hard
+          Way": <https://learncodethehardway.org/regex/>)
 
       The jq regex filters are defined so that they can be used using
       one of these patterns:
 
-          STRING | FILTER( REGEX )
-          STRING | FILTER( REGEX; FLAGS )
-          STRING | FILTER( [REGEX] )
-          STRING | FILTER( [REGEX, FLAGS] )
+          string | FILTER( REGEX )
+          string | FILTER( REGEX; FLAGS )
+          string | FILTER( [REGEX] )
+          string | FILTER( [REGEX, FLAGS] )
 
       where:
-      * STRING, REGEX and FLAGS are jq strings and subject to jq string interpolation;
-      * REGEX, after string interpolation, should be a valid PCRE regex;
-      * FILTER is one of `test`, `match`, or `capture`, as described below.
 
-      FLAGS is a string consisting of one of more of the supported flags:
+      - `REGEX` and `FLAGS` are jq strings, and thus are subject to
+          `"jq string \(interpolation)"`;
 
-      * `g` - Global search (find all matches, not just the first)
-      * `i` - Case insensitive search
-      * `m` - Multi line mode ('.' will match newlines)
-      * `n` - Ignore empty matches
-      * `p` - Both s and m modes are enabled
-      * `s` - Single line mode ('^' -> '\A', '$' -> '\Z')
-      * `l` - Find longest possible matches
-      * `x` - Extended regex format (ignore whitespace and comments)
+      - `REGEX`, after string interpolation, should be a valid PCRE
+          regular expression;
 
-      To match whitespace in an x pattern use an escape such as \s, e.g.
+      - `FILTER` is one of `test`, `match`, or `capture`, as described
+        below.
 
-      * test( "a\\sb", "x" ).
+      `FLAGS` is a single string consisting, of one of more of the
+      supported flags:
 
-      Note that certain flags may also be specified within REGEX, e.g.
+      - `g` - Global search (find all matches, not just the first)
 
-      * jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'
+      - `i` - Case-insensitive search
 
-      evaluates to: true, true, false, false.
+      - `m` - Multi-line mode (e.g. `.` will match newlines)
+
+      - `n` - Ignore empty matches
+
+      - `p` - Both `s` and `m` modes are enabled
+
+      - `s` - Single-line mode (`^` -> `\A`, `$` -> `\Z`)
+
+      - `l` - Find longest possible matches
+
+      - `x` - Extended regex format (ignore whitespace and comments)
+
+      To match whitespace in an `x`-mode extended regex use an escape such
+      as `\s`, e.g.
+
+          test( "a\sb", "x" ).
+
+      Note that certain flags may also be specified within `REGEX`, e.g.
+
+          jq -n '("test", "TEst", "teST", "TEST") | test( "(?i)te(?-i)st" )'
+
+      evaluates to: `true`, `true`, `false`, `false`.
 
     entries:
-      - title: "`test(val)`, `test(regex; flags)`"
+      - title: "`test(value)`, `test(regex; flags)`"
         body: |
 
-          Like `match`, but does not return match objects, only `true` or `false`
-          for whether or not the regex matches the input.
+          Like `match`, but does not return match objects, only `true` or
+          `false` for whether or not the given `regex` matches the input.
 
         examples:
           - program: 'test("foo")'
@@ -2254,25 +2388,35 @@ sections:
             input: '["xabcd", "ABC"]'
             output: ['true', 'true']
 
-      - title: "`match(val)`, `match(regex; flags)`"
+      - title: "`match(value)`, `match(regex; flags)`"
         body: |
 
-          **match** outputs an object for each match it finds.  Matches have
-          the following fields:
+          `match` outputs an **object** for each match it finds.  Matches
+          have the following fields:
 
-          * `offset` - offset in UTF-8 codepoints from the beginning of the input
-          * `length` - length in UTF-8 codepoints of the match
-          * `string` - the string that it matched
-          * `captures` - an array of objects representing capturing groups.
+          - `offset` - offset (in Unicode codepoints) from the beginning
+              of the input
 
-          Capturing group objects have the following fields:
+          - `length` - length (in codepoints) of the match
 
-          * `offset` - offset in UTF-8 codepoints from the beginning of the input
-          * `length` - length in UTF-8 codepoints of this capturing group
-          * `string` - the string that was captured
-          * `name` - the name of the capturing group (or `null` if it was unnamed)
+          - `string` - the string that it matched
 
-          Capturing groups that did not match anything return an offset of -1
+          - `captures` - an array of objects representing capture-groups
+
+          Further, capture-group objects have the following sub-fields:
+
+          - `offset` - offset (in codepoints) from the beginning of the
+              input
+
+          - `length` - length (in codepoints) of this capturing group
+
+          - `string` - the string that was captured
+
+          - `name` - the name of the capturing group (or `null` if it was
+              unnamed)
+
+          Capturing groups that did not match anything return an offset of
+          `-1`.
 
         examples:
           - program: 'match("(abc)+"; "g")'
@@ -2302,9 +2446,9 @@ sections:
       - title: "`capture(val)`, `capture(regex; flags)`"
         body: |
 
-         Collects the named captures in a JSON object, with the name
-         of each capture as the key, and the matched string as the
-         corresponding value.
+          `capture` collects the named captures in a JSON object, with the
+          name of each capture as the key, and the matched string as the
+          corresponding value.
 
         examples:
           - program: 'capture("(?<a>[a-z]+)-(?<n>[0-9]+)")'
@@ -2314,11 +2458,11 @@ sections:
       - title: "`scan(regex)`, `scan(regex; flags)`"
         body: |
 
-          Emit a stream of the non-overlapping substrings of the input
-          that match the regex in accordance with the flags, if any
-          have been specified.  If there is no match, the stream is empty.
-          To capture all the matches for each input string, use the idiom
-          `[ expr ]`, e.g. `[ scan(regex) ]`.
+          `scan` produces an individual output value for each of the
+          non-overlapping substrings of the input that match the regex.
+          If there is no match, no outputs are produced.  To capture all
+          the matches for each input string, use `[]`, e.g.
+          `[ scan(regex) ]`.
 
         example:
           - program: 'scan("c")'
@@ -2351,15 +2495,16 @@ sections:
             input: '("ab,cd", "ef, gh")'
             output: ['"ab"', '"cd"', '"ef"', '"gh"']
 
-      - title: "`sub(regex; tostring)` `sub(regex; string; flags)`"
+      - title: "`sub(regex; str)` `sub(regex; str; flags)`"
         body: |
 
-          Emit the string obtained by replacing the first match of regex in the
-          input string with `tostring`, after interpolation.  `tostring` should
-          be a jq string, and may contain references to named captures. The
-          named captures are, in effect, presented as a JSON object (as
-          constructed by `capture`) to `tostring`, so a reference to a captured
-          variable named "x" would take the form: "\(.x)".
+          Emit the string obtained by replacing the first match of `regex`
+          in the input string with `str`, after interpolation.  `str`
+          should be a jq string, and may contain references to named
+          captures. The named captures are, in effect, presented as a JSON
+          object (as constructed by `capture`) to `tostring`, so a
+          reference to a capture-group named "x" would take the form
+          `"\(.x)"`.
 
         example:
           - program: 'sub("^[^a-z]*(?<x>[a-z]*).*")'
@@ -2367,11 +2512,11 @@ sections:
             output: '"ZabcZabc"'
 
 
-      - title: "`gsub(regex; string)`, `gsub(regex; string; flags)`"
+      - title: "`gsub(regex; str)`, `gsub(regex; str; flags)`"
         body: |
 
-          `gsub` is like `sub` but all the non-overlapping occurrences of the regex are
-          replaced by the string, after interpolation.
+          `gsub` is like `sub` but all the non-overlapping occurrences of
+          the `regex` are replaced by the `str`, after interpolation.
 
         example:
           - program: 'gsub("(?<x>.)[^a]*"; "+\(.x)-")'
@@ -2381,6 +2526,7 @@ sections:
 
   - title: Advanced features
     body: |
+
       Variables are an absolute necessity in most programming languages, but
       they're relegated to an "advanced feature" in jq.
 
@@ -2439,9 +2585,9 @@ sections:
           variables actually makes our lives easier.
 
 
-          Suppose we have an array of blog posts, with "author" and "title"
-          fields, and another object which is used to map author usernames to
-          real names. Our input looks like:
+          Suppose we have an array of blog posts, with `"author"` and
+          `"title"` fields, and another object which is used to map author
+          usernames to real names. Our input looks like:
 
               {"posts": [{"title": "Frist psot", "author": "anon"},
                          {"title": "A well-written article", "author": "person1"}],
@@ -2464,8 +2610,9 @@ sections:
           with `$x` set to that value.  Thus `as` functions as something of a
           foreach loop.
 
-          Just as `{foo}` is a handy way of writing `{foo: .foo}`, so
-          `{$foo}` is a handy way of writing `{foo:$foo}`.
+          Additionally, for convenience, `{$foo}` is provided as a handy
+          way of writing `{foo: $foo}`, just as `{foo}` is a handy way of
+          writing `{foo: .foo}`.
 
           Multiple variables may be declared using a single `as` expression by
           providing a pattern that matches the structure of the input
@@ -2544,9 +2691,9 @@ sections:
 
               def addvalue(f): f as $f | map(. + $f);
 
-          Or use the short-hand:
+          This is common enough, that again, a shorthand is provided:
 
-              def addvalue($f): ...;
+              def addvalue($f): map(. + $f);
 
           With either definition, `addvalue(.foo)` will add the current
           input's `.foo` field to each element of the array.  Do note
@@ -2611,7 +2758,7 @@ sections:
       - title: "`isempty(exp)`"
         body: |
 
-          Returns true if `exp` produces no outputs, false otherwise.
+          Returns `true` if `exp` produces no outputs, `false` otherwise.
 
         examples:
           - program: 'isempty(empty)'
@@ -2621,7 +2768,8 @@ sections:
       - title: "`limit(n; exp)`"
         body: |
 
-          The `limit` function extracts up to `n` outputs from `exp`.
+          The `limit` function produces up to `n` outputs from `exp`, and
+          discards any further results.
 
         examples:
           - program: '[limit(3;.[])]'
@@ -2632,9 +2780,9 @@ sections:
         body: |
 
           The `first(expr)` and `last(expr)` functions extract the first
-          and last values from `expr`, respectively.
+          and last results produced by `expr`, respectively.
 
-          The `nth(n; expr)` function extracts the nth value output by
+          The `nth(n; expr)` function extracts the n'th value produced by
           `expr`.  This can be defined as `def nth(n; expr):
           last(limit(n + 1; expr));`.  Note that `nth(n; expr)` doesn't
           support negative values of `n`.
@@ -2647,10 +2795,11 @@ sections:
       - title: "`first`, `last`, `nth(n)`"
         body: |
 
-          The `first` and `last` functions extract the first
-          and last values from any array at `.`.
+          The `first` and `last` filters extract the first and last values
+          from any input array.
 
-          The `nth(n)` function extracts the nth value of any array at `.`.
+          The `nth(n)` function extracts the nth value from any input
+          array.
 
         examples:
           - program: '[range(.)]|[first, last, nth(5)]'
@@ -2664,10 +2813,10 @@ sections:
           allow the construction of `limit` and reducers that produce
           intermediate results (see example).
 
-          The form is `foreach EXP as $var (INIT; UPDATE; EXTRACT)`.
-          Like `reduce`, `INIT` is evaluated once to produce a state
-          value, then each output of `EXP` is bound to `$var`, `UPDATE`
-          is evaluated for each output of `EXP` with the current state
+          The form is `foreach EXPR as $var (INIT; UPDATE; EXTRACT)`.
+          As with `reduce`, `INIT` is evaluated once to produce a state
+          value, then each output of `EXPR` is bound to `$var`, `UPDATE`
+          is evaluated for each output of `EXPR` with the current state
           and with `$var` visible.  Each value output by `UPDATE`
           replaces the previous state.  Finally, `EXTRACT` is evaluated
           for each new state to extract an output of `foreach`.
@@ -2691,7 +2840,7 @@ sections:
           function can be recursive.  The `while` builtin is also
           implemented in terms of recursion.
 
-          Tail calls are optimized whenever the expression to the left of
+          Tail-calls are optimized whenever the expression to the left of
           the recursive call outputs its last value.  In practice this
           means that the expression to the left of the recursive call
           should not produce more than one output for each input.
@@ -2719,9 +2868,9 @@ sections:
             languages that have generators.  For example, `.[]`
             generates all the values in its input (which must be an
             array or an object), `range(0; 10)` generates the integers
-            between 0 and 10, and so on.
+            between `0` and `10`, and so on.
 
-            Even the comma operator is a generator, generating first the
+            Even the comma operator is a generator: generating first the
             values generated by the expression to the left of the comma,
             then for each of those, the values generate by the
             expression on the right of the comma.
@@ -2767,11 +2916,10 @@ sections:
       Besides simple arithmetic operators such as `+`, jq also has most
       standard math functions from the C math library.  C math functions
       that take a single input argument (e.g., `sin()`) are available as
-      zero-argument jq functions.  C math functions that take two input
-      arguments (e.g., `pow()`) are available as two-argument jq
-      functions that ignore `.`.  C math functions that take three input
-      arguments are available as three-argument jq functions that ignore
-      `.`.
+      zero-argument jq filters that operate on their input.  C math
+      functions that take more than one argument (e.g., `pow(x, y)`,
+      `fma(x, y, z)`) are available as multi-argument jq functions that
+      ignore their input.
 
       Availability of standard math functions depends on the
       availability of the corresponding math functions in your operating
@@ -2835,12 +2983,12 @@ sections:
           Causes a debug message based on the input value to be
           produced.  The jq executable wraps the input value with
           `["DEBUG:", <input-value>]` and prints that and a newline on
-          stderr, compactly.  This may change in the future.
+          `stderr`, compactly.  This may change in the future.
 
       - title: "`stderr`"
         body: |
 
-          Prints its input in raw and compact mode to stderr with no
+          Prints its input in raw and compact mode to `stderr` with no
           additional decoration, not even a newline.
 
       - title: "`input_filename`"
@@ -2914,6 +3062,7 @@ sections:
 
   - title: Assignment
     body: |
+
       Assignment works a little differently in jq than in most
       programming languages. jq doesn't distinguish between references
       to and copies of something - two objects or arrays are either
@@ -2924,7 +3073,7 @@ sections:
       and you append something to `.foo`, then `.bar` will not get
       bigger, even if you've previously set `.bar = .foo`.  If you're
       used to programming in languages like Python, Java, Ruby,
-      Javascript, etc. then you can think of it as though jq does a full
+      JavaScript, etc. then you can think of it as though jq does a full
       deep copy of every object before it does the assignment (for
       performance it doesn't actually do that, but that's the general
       idea).
@@ -2935,40 +3084,47 @@ sections:
       can be represented in JSON.
 
       All the assignment operators in jq have path expressions on the
-      left-hand side (LHS).  The right-hand side (RHS) procides values
+      left-hand side (LHS).  The right-hand side (RHS) produces values
       to set to the paths named by the LHS path expressions.
 
       Values in jq are always immutable.  Internally, assignment works
-      by using a reduction to compute new, replacement values for `.` that
-      have had all the desired assignments applied to `.`, then
-      outputting the modified value.  This might be made clear by this
-      example: `{a:{b:{c:1}}} | (.a.b|=3), .`.  This will output
-      `{"a":{"b":3}}` and `{"a":{"b":{"c":1}}}` because the last
-      sub-expression, `.`, sees the original value, not the modified
-      value.
+      by using a reduction to compute new, replacement values for the
+      input value that have had all the desired assignments applied to
+      the input value, then outputting the modified value.
+
+      This might be made clear by this example:
+
+          {a:{b:{c:1}}} | (.a.b |= 3), .
+
+      This will output `{"a":{"b":3}}` and `{"a":{"b":{"c":1}}}` because
+      the last sub-expression, `.`, sees the original value, not the
+      modified value.
 
       Most users will want to use modification assignment operators,
       such as `|=` or `+=`, rather than `=`.
 
       Note that the LHS of assignment operators refers to a value in
-      `.`.  Thus `$var.foo = 1` won't work as expected (`$var.foo` is
-      not a valid or useful path expression in `.`); use `$var | .foo =
-      1` instead.
+      the input.  Thus `$var.foo = 1` won't work as expected (`$var.foo`
+      is not a valid or useful path expression in `.`); use
+      `$var | .foo = 1` instead.
 
-      Note too that `.a,.b=0` does not set `.a` and `.b`, but
-      `(.a,.b)=0` sets both.
+      Note too that `.a,.b=0` does not set `.a` and `.b`, but `(.a,.b)=0`
+      sets both.
 
     entries:
       - title: "Update-assignment: `|=`"
         body: |
-          This is the "update" operator '|='.  It takes a filter on the
-          right-hand side and works out the new value for the property
-          of `.` being assigned to by running the old value through this
-          expression. For instance, (.foo, .bar) |= .+1 will build an
-          object with the "foo" field set to the input's "foo" plus 1,
-          and the "bar" field set to the input's "bar" plus 1.
 
-          The left-hand side can be any general path expression; see `path()`.
+          This is the "update" operator `|=`.  It takes a filter on the
+          right-hand side and works out the new value for the property
+          of the input object being assigned to by running the old value
+          through this expression. For instance, `(.foo, .bar) |= .+1`
+          will build an object with the `"foo"` field set to the input's
+          `"foo"` plus `1`, and the `"bar"` field set to the input's
+          `"bar"` plus `1`.
+
+          The left-hand side can be any general path expression; see
+          `path()`.
 
           Note that the left-hand side of '|=' refers to a value in `.`.
           Thus `$var.foo |= . + 1` won't work as expected (`$var.foo` is
@@ -2979,7 +3135,7 @@ sections:
           the left-hand side path will be deleted, as with `del(path)`.
 
           If the right-hand side outputs multiple values, only the first
-          one will be used (COMPATIBILITY NOTE: in jq 1.5 and earlier
+          one will be used (**COMPATIBILITY NOTE**: in jq 1.5 and earlier
           releases, it used to be that only the last one was used).
 
         examples:
@@ -2990,8 +3146,8 @@ sections:
       - title: "Arithmetic update-assignment: `+=`, `-=`, `*=`, `/=`, `%=`, `//=`"
         body: |
 
-          jq has a few operators of the form `a op= b`, which are all
-          equivalent to `a |= . op b`. So, `+= 1` can be used to
+          jq has a few operators of the form `a OPER= b`, which are all
+          equivalent to `a |= . OPER b`. So, `+= 1` can be used to
           increment values, being the same as `|= . + 1`.
 
         examples:
@@ -3010,43 +3166,46 @@ sections:
 
           If the RHS of '=' produces multiple values, then for each such
           value jq will set the paths on the left-hand side to the value
-          and then it will output the modified `.`.  For example,
+          and then it will output the modified input value.  For example,
           `(.a,.b)=range(2)` outputs `{"a":0,"b":0}`, then
           `{"a":1,"b":1}`.  The "update" assignment forms (see above) do
           not do this.
 
-          This example should show the difference between '=' and '|=':
+          This example should show the difference between `=` and `|=`:
 
-          Provide input '{"a": {"b": 10}, "b": 20}' to the programs:
+          Provide input `{"a": {"b": 10}, "b": 20}` to the programs:
 
-          .a = .b
+              .a = .b
 
-          .a |= .b
+          ... and
 
-          The former will set the "a" field of the input to the "b"
-          field of the input, and produce the output {"a": 20, "b": 20}.
-          The latter will set the "a" field of the input to the "a"
-          field's "b" field, producing {"a": 10, "b": 20}.
+              .a |= .b
 
-          Another example of the difference between '=' and '|=':
+          The former will set the `"a"` field of the input to the `"b"`
+          field of the input, and produce the output `{"a": 20, "b": 20}`.
+          The latter will set the `"a"` field of the input to the `"a"`
+          field's `"b"` field, producing `{"a": 10, "b": 20}`.
 
-          null|(.a,.b)=range(3)
+          Another example of the difference between `'='` and `'|='`:
 
-          outputs '{"a":0,"b":0}', '{"a":1,"b":1}', and '{"a":2,"b":2}',
-          while
+              null | (.a,.b) = range(3)
 
-          null|(.a,.b)|=range(3)
+          outputs `'{"a":0,"b":0}'`, `'{"a":1,"b":1}'`, and
+          `'{"a":2,"b":2}'`, while
 
-          outputs just '{"a":0,"b":0}'.
+              null | (.a,.b) |= range(3)
+
+          outputs just `'{"a":0,"b":0}'`.
 
       - title: Complex assignments
         body: |
+
           Lots more things are allowed on the left-hand side of a jq assignment
           than in most languages. We've already seen simple field accesses on
           the left hand side, and it's no surprise that array accesses work just
           as well:
 
-              .posts[0].title = "JQ Manual"
+              .posts[0].title = "jq Manual"
 
           What may come as a surprise is that the expression on the left may
           produce multiple results, referring to different points in the input
@@ -3058,22 +3217,22 @@ sections:
           array of each post in the input (where the input is an object with a
           field "posts" which is an array of posts).
 
-          When jq encounters an assignment like 'a = b', it records the "path"
-          taken to select a part of the input document while executing a. This
-          path is then used to find which part of the input to change while
-          executing the assignment. Any filter may be used on the
+          When jq encounters an assignment like `'a = b'`, it records the
+          "path" taken to select a part of the input document while executing
+          `a`. This path is then used to find which part of the input to change
+          while executing the assignment. Any filter may be used on the
           left-hand side of an equals - whichever paths it selects from the
           input will be where the assignment is performed.
 
           This is a very powerful operation. Suppose we wanted to add a comment
           to blog posts, using the same "blog" input above. This time, we only
-          want to comment on the posts written by "stedolan". We can find those
-          posts using the "select" function described earlier:
+          want to comment on the posts written by `"stedolan"`. We can find
+          those posts using the `"select"` function described earlier:
 
               .posts[] | select(.author == "stedolan")
 
           The paths provided by this operation point to each of the posts that
-          "stedolan" wrote, and we can comment on each of them in the same way
+          `"stedolan"` wrote, and we can comment on each of them in the same way
           that we did before:
 
               (.posts[] | select(.author == "stedolan") | .comments) |=
@@ -3089,58 +3248,60 @@ sections:
       path (see below).  The `import` and `include` directives allow the
       importer to alter this path.
 
-      Paths in the a search path are subject to various substitutions.
+      Paths in the search path are subject to various substitutions:
 
-      For paths starting with "~/", the user's home directory is
-      substituted for "~".
+      - In paths starting with `"~/"`, the user's `$HOME` directory is
+          substituted for the `~`.
 
-      For paths starting with "$ORIGIN/", the path of the jq executable
-      is substituted for "$ORIGIN".
+      - In paths starting with `"$ORIGIN/"`, the path of the jq
+          executable is substituted for `$ORIGIN`.
 
-      For paths starting with "./" or paths that are ".", the path of
-      the including file is substituted for ".".  For top-level programs
-      given on the command-line, the current directory is used.
+      - In paths starting with `"./"`, or the path that is exactly
+          `"."`, the path of the including file is substituted for the
+          `.`.  For top-level programs given on the command-line, the
+          current directory is used.
 
       Import directives can optionally specify a search path to which
       the default is appended.
 
       The default search path is the search path given to the `-L`
-      command-line option, else `["~/.jq", "$ORIGIN/../lib/jq",
-      "$ORIGIN/../lib"]`.
+      command-line option, or if omitted,
+      `["~/.jq", "$ORIGIN/../lib/jq", "$ORIGIN/../lib"]`.
 
       Null and empty string path elements terminate search path
       processing.
 
-      A dependency with relative path "foo/bar" would be searched for in
-      "foo/bar.jq" and "foo/bar/bar.jq" in the given search path. This
-      is intended to allow modules to be placed in a directory along
-      with, for example, version control files, README files, and so on,
-      but also to allow for single-file modules.
+      A dependency with relative path `"foo/bar"` would be searched for
+      in `"foo/bar.jq"` and `"foo/bar/bar.jq"` in the given search path.
+      This is intended to allow modules to be placed in a directory
+      along with, for example, version control files, README files, and
+      so on, but also to allow for single-file modules.
 
       Consecutive components with the same name are not allowed to avoid
-      ambiguities (e.g., "foo/foo").
+      ambiguities (e.g., `"foo/foo"`).
 
-      For example, with `-L$HOME/.jq` a module `foo` can be found in
-      `$HOME/.jq/foo.jq` and `$HOME/.jq/foo/foo.jq`.
+      For example, with the command-line argument `-L$HOME/.jq`, a
+      module `foo` can be found in `$HOME/.jq/foo.jq` and
+      `$HOME/.jq/foo/foo.jq`.
 
-      If "$HOME/.jq" is a file, it is sourced into the main program.
+      If `"$HOME/.jq"` is a file, it is sourced into the main program.
 
     entries:
       - title: "`import RelativePathString as NAME [<metadata>];`"
         body: |
 
           Imports a module found at the given path relative to a
-          directory in a search path.  A ".jq" suffix will be added to
+          directory in a search path.  A `".jq"` suffix will be added to
           the relative path string.  The module's symbols are prefixed
-          with "NAME::".
+          with `"NAME::"`.
 
-          The optional metadata must be a constant jq expression.  It
-          should be an object with keys like "homepage" and so on.  At
-          this time jq only uses the "search" key/value of the metadata.
-          The metadata is also made available to users via the
+          The optional `<metadata>` must be a constant jq expression.
+          It should be an object with keys like `"homepage"` and so on.
+          At this time jq only uses the `"search"` key/value of this
+          metadata-object.  It is also made available to users via the
           `modulemeta` builtin.
 
-          The "search" key in the metadata, if present, should have a
+          The `"search"` key in the metadata, if present, should have a
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.
 
@@ -3149,31 +3310,31 @@ sections:
 
           Imports a module found at the given path relative to a
           directory in a search path as if it were included in place.  A
-          ".jq" suffix will be added to the relative path string.  The
+          `".jq"` suffix will be added to the relative path string.  The
           module's symbols are imported into the caller's namespace as
           if the module's content had been included directly.
 
-          The optional metadata must be a constant jq expression.  It
-          should be an object with keys like "homepage" and so on.  At
-          this time jq only uses the "search" key/value of the metadata.
-          The metadata is also made available to users via the
+          The optional `<metadata>` must be a constant jq expression.
+          It should be an object with keys like `"homepage"` and so on.
+          At this time jq only uses the `"search"` key/value of this
+          metadata-object.  It is also made available to users via the
           `modulemeta` builtin.
 
       - title: "`import RelativePathString as $NAME [<metadata>];`"
         body: |
 
           Imports a JSON file found at the given path relative to a
-          directory in a search path.  A ".json" suffix will be added to
-          the relative path string.  The file's data will be available
-          as `$NAME::NAME`.
+          directory in a search path.  A `".json"` suffix will be added
+          to the relative path string.  The file's data will be
+          available as `$NAME::NAME`.
 
-          The optional metadata must be a constant jq expression.  It
-          should be an object with keys like "homepage" and so on.  At
-          this time jq only uses the "search" key/value of the metadata.
-          The metadata is also made available to users via the
+          The optional `<metadata>` must be a constant jq expression.
+          It should be an object with keys like `"homepage"` and so on.
+          At this time jq only uses the `"search"` key/value of this
+          metadata-object.  It is also made available to users via the
           `modulemeta` builtin.
 
-          The "search" key in the metadata, if present, should have a
+          The `"search"` key in the metadata, if present, should have a
           string or array value (array of strings); this is the search
           path to be prefixed to the top-level search path.
 
@@ -3184,10 +3345,12 @@ sections:
           proper operation.  It serves only the purpose of providing
           metadata that can be read with the `modulemeta` builtin.
 
-          The metadata must be a constant jq expression.  It should be
-          an object with keys like "homepage".  At this time jq doesn't
-          use this metadata, but it is made available to users via the
+          The optional `<metadata>` must be a constant jq expression.
+          It should be an object with keys like `"homepage"` and so on.
+          At this time jq only uses the `"search"` key/value of this
+          metadata-object.  It is also made available to users via the
           `modulemeta` builtin.
+
 
       - title: "`modulemeta`"
         body: |
@@ -3239,3 +3402,5 @@ sections:
         - 35 (magenta)
         - 36 (cyan)
         - 37 (white)
+
+      (See: <https://en.wikipedia.org/wiki/ANSI_escape_code>)
